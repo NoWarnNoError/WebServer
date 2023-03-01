@@ -37,18 +37,18 @@ void WebServer::eventListen() {
         if ((listen_fd = socket(p_ar->ai_family, p_ar->ai_socktype,
                                 p_ar->ai_protocol)) < 0) {
             close(listen_fd);
-        } else {
-            int flag = 1;
-            setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &flag,
-                       sizeof(flag));
-
-            if ((r = bind(listen_fd, server_ar->ai_addr,
-                          server_ar->ai_addrlen)) < 0) {
-                perror("bind");
-                exit(-1);
-            }
-            break;
+            continue;
         }
+
+        int flag = 1;
+        setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+
+        if ((r = bind(listen_fd, server_ar->ai_addr, server_ar->ai_addrlen)) <
+            0) {
+            close(listen_fd);
+            continue;
+        }
+        break;
     }
     if (p_ar == nullptr) {
         cerr << "fail to connect server" << endl;
@@ -60,12 +60,30 @@ void WebServer::eventListen() {
               INET6_ADDRSTRLEN);
     cout << ip << endl;
 
+    freeaddrinfo(server_ar);
+
     if ((r = listen(listen_fd, 5)) < 0) {
         perror("listen");
         exit(-1);
     }
 
-    freeaddrinfo(server_ar);
+    for (;;) {
+        sockaddr_storage* event_ar = new sockaddr_storage();
+        socklen_t event_ar_len = sizeof(event_ar);
+        int event_fd = accept(listen_fd, (sockaddr*)event_ar, &event_ar_len);
+        if (event_fd < 0) {
+            perror("accept");
+            continue;
+        }
+
+        if (fork() == 0) {
+            close(listen_fd);
+            // 服务器对event_fd进行响应
+            close(event_fd);
+            exit(0);  // 退出子进程
+        }
+        close(event_fd);
+    }
 }
 
 void* get_in_addr(struct sockaddr* sa) {
