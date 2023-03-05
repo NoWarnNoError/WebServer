@@ -3,21 +3,23 @@
 #include <iostream>
 #include <memory>
 
+#include "myEpoll.h"
 #include "webserver.h"
 
 using namespace std;
 
 void* get_in_addr(struct sockaddr* sa);
 
-WebServer::WebServer() {}
-
-WebServer::WebServer(const char* _PORT) : PORT(_PORT) {}
+WebServer::WebServer(const char* __PORT,
+                     const int __BUFFER_SIZE,
+                     const int __EVENTS_SIZE)
+    : PORT(__PORT), BUFFER_SIZE(__BUFFER_SIZE), EVENTS_SIZE(__EVENTS_SIZE) {}
 
 WebServer::~WebServer() {}
 
 void WebServer::eventListen() {
     addrinfo* hints = new addrinfo();
-    memset(hints, 0, sizeof(hints));
+    // memset(hints, 0, sizeof(hints));
     hints->ai_family = AF_UNSPEC;
     hints->ai_flags = AI_PASSIVE;
     hints->ai_socktype = SOCK_STREAM;
@@ -31,7 +33,6 @@ void WebServer::eventListen() {
 
     freeaddrinfo(hints);
 
-    int listen_fd = 0;
     auto p_ar = server_ar;
     for (; p_ar != nullptr; p_ar = p_ar->ai_next) {
         if ((listen_fd = socket(p_ar->ai_family, p_ar->ai_socktype,
@@ -51,7 +52,7 @@ void WebServer::eventListen() {
         break;
     }
     if (p_ar == nullptr) {
-        cerr << "fail to connect server" << endl;
+        cerr << "fail to bind server" << endl;
         exit(-1);
     }
 
@@ -67,22 +68,25 @@ void WebServer::eventListen() {
         exit(-1);
     }
 
-    for (;;) {
-        sockaddr_storage* event_ar = new sockaddr_storage();
-        socklen_t event_ar_len = sizeof(event_ar);
-        int event_fd = accept(listen_fd, (sockaddr*)event_ar, &event_ar_len);
-        if (event_fd < 0) {
-            perror("accept");
-            continue;
-        }
+    close(listen_fd);
+}
 
-        if (fork() == 0) {
-            close(listen_fd);
-            // 服务器对event_fd进行响应
-            close(event_fd);
-            exit(0);  // 退出子进程
+void WebServer::eventLoop() {
+    epoll_event events[1024];
+    epoll_fd = epoll_create(5);
+    if (epoll_fd < 0) {
+        perror("epoll_create");
+        exit(-1);
+    }
+    my_epoll->addfd(epoll_fd, listen_fd, true);
+
+    for (;;) {
+        int epoll_number = epoll_wait(epoll_fd, events, EVENTS_SIZE, -1);
+        if (epoll_number < 0) {
+            perror("epoll_wait");
+            break;
         }
-        close(event_fd);
+        et(epoll_fd, listen_fd, epoll_number, events, BUFFER_SIZE);
     }
 }
 
@@ -92,4 +96,40 @@ void* get_in_addr(struct sockaddr* sa) {
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+void WebServer::et(int epoll_fd,
+                   int listen_fd,
+                   int epoll_number,
+                   epoll_event* events,
+                   int BUFFER_SIZE) {
+    for (int i = 0; i < epoll_number; ++i) {
+        int socket_fd = events[i].data.fd;
+        if (socket_fd == listen_fd) {
+            sockaddr_storage ar;
+            socklen_t ar_len = sizeof(ar);
+            int connfd = 0;
+            if ((connfd = accept(socket_fd, (sockaddr*)&ar, &ar_len)) < 0) {
+                perror("accept");
+                continue;
+            }
+            my_epoll->addfd(epoll_fd, connfd, true);
+        } else if (events[i].events == EPOLLIN) {
+            char buffer[BUFFER_SIZE];
+            memset(buffer, 0, BUFFER_SIZE);
+            for (;;) {
+                int r = 0;
+                if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                        // 对于非阻塞IO，该条件表示数据已读取完毕
+                        break;
+                    }
+                    close(socket_fd);
+                    break;
+                } else if (r == 0) {
+                    close(socket_fd);
+                }
+            }
+        }
+    }
 }
