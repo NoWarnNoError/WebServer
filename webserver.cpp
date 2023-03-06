@@ -10,12 +10,21 @@ using namespace std;
 
 void* get_in_addr(struct sockaddr* sa);
 
-WebServer::WebServer(const char* __PORT,
+WebServer::WebServer() : PORT(0), BUFFER_SIZE(0), EVENTS_SIZE(0) {}
+
+WebServer::WebServer(const char* const __PORT,
                      const int __BUFFER_SIZE,
                      const int __EVENTS_SIZE)
-    : PORT(__PORT), BUFFER_SIZE(__BUFFER_SIZE), EVENTS_SIZE(__EVENTS_SIZE) {}
+    : PORT(__PORT),
+      BUFFER_SIZE(__BUFFER_SIZE),
+      EVENTS_SIZE(__EVENTS_SIZE),
+      my_epoll(new Epoll()),
+      event_arr(new epoll_event[EVENTS_SIZE]) {}
 
-WebServer::~WebServer() {}
+WebServer::~WebServer() {
+    close(listen_fd);
+    close(epoll_fd);
+}
 
 void WebServer::eventListen() {
     addrinfo* hints = new addrinfo();
@@ -67,12 +76,9 @@ void WebServer::eventListen() {
         perror("listen");
         exit(-1);
     }
-
-    close(listen_fd);
 }
 
 void WebServer::eventLoop() {
-    epoll_event events[1024];
     epoll_fd = epoll_create(5);
     if (epoll_fd < 0) {
         perror("epoll_create");
@@ -81,12 +87,56 @@ void WebServer::eventLoop() {
     my_epoll->addfd(epoll_fd, listen_fd, true);
 
     for (;;) {
-        int epoll_number = epoll_wait(epoll_fd, events, EVENTS_SIZE, -1);
+        int epoll_number = epoll_wait(epoll_fd, event_arr, EVENTS_SIZE, -1);
         if (epoll_number < 0) {
             perror("epoll_wait");
             break;
         }
-        et(epoll_fd, listen_fd, epoll_number, events, BUFFER_SIZE);
+        et(epoll_number);
+    }
+}
+
+int WebServer::dealConnect(int socket_fd) {
+    sockaddr_storage ar;
+    socklen_t ar_len = sizeof(ar);
+    int connfd = 0;
+    if ((connfd = accept(socket_fd, (sockaddr*)&ar, &ar_len)) < 0) {
+        perror("accept");
+        return -1;
+    }
+    my_epoll->addfd(epoll_fd, connfd, true);
+
+    return 0;
+}
+
+void WebServer::dealRead(int socket_fd) {
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    for (;;) {
+        int r = 0;
+        if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // 对于非阻塞IO，该条件表示数据已读取完毕
+                break;
+            }
+            close(socket_fd);
+            break;
+        } else if (r == 0) {
+            close(socket_fd);
+        }
+    }
+}
+
+void WebServer::et(int epoll_number) {
+    for (int i = 0; i < epoll_number; ++i) {
+        int socket_fd = event_arr[i].data.fd;
+        if (socket_fd == listen_fd) {
+            if (dealConnect(socket_fd) < 0) {
+                continue;
+            }
+        } else if (event_arr[i].events == EPOLLIN) {
+            dealRead(socket_fd);
+        }
     }
 }
 
@@ -96,40 +146,4 @@ void* get_in_addr(struct sockaddr* sa) {
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-void WebServer::et(int epoll_fd,
-                   int listen_fd,
-                   int epoll_number,
-                   epoll_event* events,
-                   int BUFFER_SIZE) {
-    for (int i = 0; i < epoll_number; ++i) {
-        int socket_fd = events[i].data.fd;
-        if (socket_fd == listen_fd) {
-            sockaddr_storage ar;
-            socklen_t ar_len = sizeof(ar);
-            int connfd = 0;
-            if ((connfd = accept(socket_fd, (sockaddr*)&ar, &ar_len)) < 0) {
-                perror("accept");
-                continue;
-            }
-            my_epoll->addfd(epoll_fd, connfd, true);
-        } else if (events[i].events == EPOLLIN) {
-            char buffer[BUFFER_SIZE];
-            memset(buffer, 0, BUFFER_SIZE);
-            for (;;) {
-                int r = 0;
-                if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
-                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                        // 对于非阻塞IO，该条件表示数据已读取完毕
-                        break;
-                    }
-                    close(socket_fd);
-                    break;
-                } else if (r == 0) {
-                    close(socket_fd);
-                }
-            }
-        }
-    }
 }

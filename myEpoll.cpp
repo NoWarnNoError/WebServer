@@ -4,7 +4,7 @@
 
 void set_fd_nonblock(int fd);
 
-Epoll::Epoll(const int __EVENTS_SIZE) : EVENTS_SIZE(__EVENTS_SIZE) {}
+Epoll::Epoll() {}
 
 Epoll::~Epoll() {}
 
