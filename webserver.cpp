@@ -127,6 +127,8 @@ void WebServer::dealRead(int socket_fd) {
     }
 }
 
+void WebServer::dealWrite(int socket_fd) {}
+
 void WebServer::et(int epoll_number) {
     for (int i = 0; i < epoll_number; ++i) {
         int socket_fd = event_arr[i].data.fd;
@@ -134,8 +136,10 @@ void WebServer::et(int epoll_number) {
             if (dealConnect(socket_fd) < 0) {
                 continue;
             }
-        } else if (event_arr[i].events == EPOLLIN) {
+        } else if (event_arr[i].events & EPOLLIN) {
             dealRead(socket_fd);
+        } else if (event_arr[i].events & EPOLLOUT) {
+            dealWrite(socket_fd);
         }
     }
 }

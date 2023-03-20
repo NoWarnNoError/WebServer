@@ -30,6 +30,6 @@ class WebServer {
     void eventLoop();
     int dealConnect(int socket_fd);
     void dealRead(int socket_fd);
-    void dealWrite();
+    void dealWrite(int socket_fd);
     void et(int epoll_number);
 };
