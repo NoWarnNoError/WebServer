@@ -1,4 +1,4 @@
-#include "lock.h"
+#include "Mutex.h"
 
 Mutex::Mutex() : mutex(new pthread_mutex_t()) {
     if (pthread_mutex_init(mutex, nullptr) != 0) {
