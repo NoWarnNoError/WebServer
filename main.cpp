@@ -18,14 +18,15 @@ int main() {
     // server->eventListen();
     // server->eventLoop();
 
-    void test();
+    test();
 
     return 0;
 }
 
 void test() {
     ThreadPool<int>* threadpool = new ThreadPool<int>(8, 100);
-    // for (int i = 0; i < 100; ++i) {
-    //     threadpool->request_append(i);
-    // }
+    for (int i = 0; i < 100; ++i) {
+        threadpool->request_append(i);
+    }
+    sleep(100);
 }

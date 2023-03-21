@@ -8,7 +8,7 @@ Mutex::Mutex() : mutex(new pthread_mutex_t()) {
 
 Mutex::~Mutex() {
     if (pthread_mutex_destroy(mutex) != 0) {
-        throw std::exception();
+        // throw std::exception();
     }
 }
 

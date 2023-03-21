@@ -8,7 +8,7 @@ Cond::Cond() : cond(new pthread_cond_t()) {
 
 Cond::~Cond() {
     if (pthread_cond_destroy(cond) != 0) {
-        throw std::exception();
+        // throw std::exception();
     }
 }
 
