@@ -1,37 +1,7 @@
 #pragma once
 
-#include <pthread.h>
-#include <unistd.h>
-#include <queue>
-#include <vector>
-
-#include "Cond.h"
-#include "Mutex.h"
-
-using namespace std;
-
-template <typename T>
-class ThreadPool {
-   private:
-    const int THREADS_MAX;
-    const int REQUESTS_MAX;
-    int shutdown;
-    Mutex* mutex_pool;
-    Cond* cond;
-    vector<pthread_t*> pthread_pool;
-    queue<T> request_queue;
-
-    ThreadPool();
-
-   public:
-    ThreadPool(const int __THREADS_MAX, const int __REQUESTS_MAX);
-    ~ThreadPool();
-
-    bool request_append(T& request);
-    static void* worker(void* arg);
-    // void workerImpl(void);
-    void run();
-};
+#include "ThreadPool_fwd.h"
+// 模板类实现无法放在.cpp中，会产生链接错误
 
 template <typename T>
 ThreadPool<T>::ThreadPool() : THREADS_MAX(0), REQUESTS_MAX(0) {}
@@ -63,7 +33,7 @@ template <typename T>
 ThreadPool<T>::~ThreadPool() {
     cond->broadcast();
     for (int i = 0; i < THREADS_MAX; ++i) {
-        pthread_join(pthread_pool[i], nullptr);
+        pthread_join(*pthread_pool[i], nullptr);
     }
     cond->~Cond();
     mutex_pool->~Mutex();
@@ -87,12 +57,12 @@ bool ThreadPool<T>::request_append(T& request) {
 template <typename T>
 void* ThreadPool<T>::worker(void* arg) {
     ThreadPool<T>* pool = static_cast<ThreadPool<T>*>(arg);
-    pool->run();
+    pool->work();
     return pool;
 }
 
 template <typename T>
-void ThreadPool<T>::run() {
+void ThreadPool<T>::work() {
     while (true) {
         mutex_pool->lock();
         while (request_queue.empty() && !shutdown) {

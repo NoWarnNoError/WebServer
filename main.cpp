@@ -1,8 +1,9 @@
 #include <memory>
 
+#include "ThreadPool/ThreadPool_Impl.h"
+#include "ThreadPool/ThreadPool_fwd.h"
 #include "config.h"
 #include "myEpoll.h"
-#include "threadpool.h"
 #include "webserver.h"
 
 using namespace std;
@@ -28,5 +29,5 @@ void test() {
     for (int i = 0; i < 100; ++i) {
         threadpool->request_append(i);
     }
-    sleep(100);
+    threadpool->~ThreadPool();
 }
