@@ -15,7 +15,7 @@ int main() {
 void test() {
     ThreadPool<int>* threadpool = new ThreadPool<int>(8, 100);
     for (int i = 0; i < 100; ++i) {
-        threadpool->request_append(i);
+        threadpool->request_append(i, 0);
     }
     threadpool->~ThreadPool();
 }

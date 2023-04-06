@@ -22,10 +22,10 @@ ThreadPool<T>::ThreadPool(const int __THREADS_MAX, const int __REQUESTS_MAX)
             pthread_pool.push_back(pd);
         }
 
-        // if (pthread_detach(pd) != 0) {
-        //     delete pd;
-        //     throw std::exception();
-        // }
+        if (pthread_detach(*pd) != 0) {
+            delete pd;
+            throw std::exception();
+        }
     }
 }
 
@@ -40,8 +40,9 @@ ThreadPool<T>::~ThreadPool() {
 }
 
 template <typename T>
-bool ThreadPool<T>::request_append(T& request) {
+bool ThreadPool<T>::request_append(T& request, int state) {
     mutex_pool->lock();
+    request->state = state;
     if (request_queue.size() < REQUESTS_MAX) {
         request_queue.push(request);
         mutex_pool->unlock();
@@ -78,6 +79,9 @@ void ThreadPool<T>::work() {
         request_queue.pop();
         mutex_pool->unlock();
         // 线程处理request
+        if (request.state == 0) {  // read
+        } else {                   // write
+        }
 
         cout << pthread_self() << "处理任务" << request << endl;
         sleep(10);

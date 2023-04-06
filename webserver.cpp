@@ -10,20 +10,33 @@ using namespace std;
 
 void* get_in_addr(struct sockaddr* sa);
 
-WebServer::WebServer() : PORT(0), BUFFER_SIZE(0), EVENTS_SIZE(0) {}
+WebServer::WebServer()
+    : PORT(0),
+      BUFFER_SIZE(0),
+      EVENTS_SIZE(0),
+      THREADS_MAX(0),
+      REQUESTS_MAX(0) {}
 
 WebServer::WebServer(const char* const __PORT,
                      const int __BUFFER_SIZE,
-                     const int __EVENTS_SIZE)
+                     const int __EVENTS_SIZE,
+                     const int __THREADS_MAX,
+                     const int __REQUESTS_MAX)
     : PORT(__PORT),
       BUFFER_SIZE(__BUFFER_SIZE),
       EVENTS_SIZE(__EVENTS_SIZE),
+      THREADS_MAX(__THREADS_MAX),
+      REQUESTS_MAX(__REQUESTS_MAX),
       my_epoll(new Epoll()),
       event_arr(new epoll_event[EVENTS_SIZE]) {}
 
 WebServer::~WebServer() {
     close(listen_fd);
     close(epoll_fd);
+}
+
+void WebServer::init_thread_pool() {
+    thread_pool = new ThreadPool<int>(THREADS_MAX, REQUESTS_MAX);
 }
 
 void WebServer::eventListen() {
@@ -53,8 +66,7 @@ void WebServer::eventListen() {
         int flag = 1;
         setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
 
-        if ((r = bind(listen_fd, server_ar->ai_addr, server_ar->ai_addrlen)) <
-            0) {
+        if ((r = bind(listen_fd, p_ar->ai_addr, p_ar->ai_addrlen)) < 0) {
             close(listen_fd);
             continue;
         }
@@ -112,22 +124,27 @@ int WebServer::dealConnect(int socket_fd) {
 void WebServer::dealRead(int socket_fd) {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    for (;;) {
-        int r = 0;
-        if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // 对于非阻塞IO，该条件表示数据已读取完毕
-                break;
-            }
-            close(socket_fd);
-            break;
-        } else if (r == 0) {
-            close(socket_fd);
-        }
-    }
+
+    thread_pool->request_append(socket_fd, 0);
+
+    // for (;;) {
+    //     int r = 0;
+    //     if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
+    //         if (errno == EAGAIN || errno == EWOULDBLOCK) {
+    //             // 对于非阻塞IO，该条件表示数据已读取完毕
+    //             break;
+    //         }
+    //         close(socket_fd);
+    //         break;
+    //     } else if (r == 0) {
+    //         close(socket_fd);
+    //     }
+    // }
 }
 
-void WebServer::dealWrite(int socket_fd) {}
+void WebServer::dealWrite(int socket_fd) {
+    thread_pool->request_append(socket_fd, 1);
+}
 
 void WebServer::et(int epoll_number) {
     for (int i = 0; i < epoll_number; ++i) {

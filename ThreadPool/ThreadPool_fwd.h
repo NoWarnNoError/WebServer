@@ -27,7 +27,7 @@ class ThreadPool {
     ThreadPool(const int __THREADS_MAX, const int __REQUESTS_MAX);
     ~ThreadPool();
 
-    bool request_append(T& request);
+    bool request_append(T& request, int state);
     // pthread_create()第三个参数要求工作函数必须是static成员函数
     // 静态成员函数只能访问静态成员变量
     static void* worker(void* arg);
