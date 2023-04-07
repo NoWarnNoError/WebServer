@@ -10,5 +10,6 @@ class Epoll {
 
     ~Epoll();
 
-    void addfd(int epoll_fd, int fd, bool enable_et);
+    void addfd(int epoll_fd, int fd, bool oneshut, bool enable_et);
+    void reset_oneshut(int epoll_fd, int fd);
 };

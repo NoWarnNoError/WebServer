@@ -96,7 +96,7 @@ void WebServer::eventLoop() {
         perror("epoll_create");
         exit(-1);
     }
-    my_epoll->addfd(epoll_fd, listen_fd, true);
+    my_epoll->addfd(epoll_fd, listen_fd, false, true);
 
     for (;;) {
         int epoll_number = epoll_wait(epoll_fd, event_arr, EVENTS_SIZE, -1);
@@ -108,6 +108,21 @@ void WebServer::eventLoop() {
     }
 }
 
+void WebServer::et(int epoll_number) {
+    for (int i = 0; i < epoll_number; ++i) {
+        int socket_fd = event_arr[i].data.fd;
+        if (socket_fd == listen_fd) {
+            if (dealConnect(socket_fd) < 0) {
+                continue;
+            }
+        } else if (event_arr[i].events & EPOLLIN) {
+            dealRead(socket_fd);
+        } else if (event_arr[i].events & EPOLLOUT) {
+            dealWrite(socket_fd);
+        }
+    }
+}
+
 int WebServer::dealConnect(int socket_fd) {
     sockaddr_storage ar;
     socklen_t ar_len = sizeof(ar);
@@ -116,7 +131,7 @@ int WebServer::dealConnect(int socket_fd) {
         perror("accept");
         return -1;
     }
-    my_epoll->addfd(epoll_fd, connfd, true);
+    my_epoll->addfd(epoll_fd, connfd, true, true);
 
     return 0;
 }
@@ -144,21 +159,6 @@ void WebServer::dealRead(int socket_fd) {
 
 void WebServer::dealWrite(int socket_fd) {
     thread_pool->request_append(socket_fd, 1);
-}
-
-void WebServer::et(int epoll_number) {
-    for (int i = 0; i < epoll_number; ++i) {
-        int socket_fd = event_arr[i].data.fd;
-        if (socket_fd == listen_fd) {
-            if (dealConnect(socket_fd) < 0) {
-                continue;
-            }
-        } else if (event_arr[i].events & EPOLLIN) {
-            dealRead(socket_fd);
-        } else if (event_arr[i].events & EPOLLOUT) {
-            dealWrite(socket_fd);
-        }
-    }
 }
 
 void* get_in_addr(struct sockaddr* sa) {
