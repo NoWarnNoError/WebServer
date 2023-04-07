@@ -3,7 +3,6 @@
 #include <iostream>
 #include <memory>
 
-#include "myEpoll.h"
 #include "webserver.h"
 
 using namespace std;
@@ -13,30 +12,38 @@ void* get_in_addr(struct sockaddr* sa);
 WebServer::WebServer()
     : PORT(0),
       BUFFER_SIZE(0),
+      MAX_FD(0),
       EVENTS_SIZE(0),
       THREADS_MAX(0),
       REQUESTS_MAX(0) {}
 
 WebServer::WebServer(const char* const __PORT,
                      const int __BUFFER_SIZE,
+                     const int __MAX_FD,
                      const int __EVENTS_SIZE,
                      const int __THREADS_MAX,
                      const int __REQUESTS_MAX)
     : PORT(__PORT),
       BUFFER_SIZE(__BUFFER_SIZE),
+      MAX_FD(__MAX_FD),
       EVENTS_SIZE(__EVENTS_SIZE),
       THREADS_MAX(__THREADS_MAX),
       REQUESTS_MAX(__REQUESTS_MAX),
+      user(new HTTP[MAX_FD]),
       my_epoll(new Epoll()),
       event_arr(new epoll_event[EVENTS_SIZE]) {}
 
 WebServer::~WebServer() {
     close(listen_fd);
     close(epoll_fd);
+
+    delete[] user;
+    delete my_epoll;
+    delete[] event_arr;
 }
 
 void WebServer::init_thread_pool() {
-    thread_pool = new ThreadPool<int>(THREADS_MAX, REQUESTS_MAX);
+    thread_pool = new ThreadPool<HTTP>(THREADS_MAX, REQUESTS_MAX);
 }
 
 void WebServer::eventListen() {
@@ -140,7 +147,7 @@ void WebServer::dealRead(int socket_fd) {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
 
-    thread_pool->request_append(socket_fd, 0);
+    thread_pool->request_append(user[socket_fd], 0);
 
     // for (;;) {
     //     int r = 0;
@@ -158,7 +165,7 @@ void WebServer::dealRead(int socket_fd) {
 }
 
 void WebServer::dealWrite(int socket_fd) {
-    thread_pool->request_append(socket_fd, 1);
+    thread_pool->request_append(user[socket_fd], 1);
 }
 
 void* get_in_addr(struct sockaddr* sa) {

@@ -7,16 +7,21 @@
 
 #include "ThreadPool/ThreadPool_Impl.h"
 #include "ThreadPool/ThreadPool_fwd.h"
+#include "http.h"
 #include "myEpoll.h"
 
 class WebServer {
    private:
     const char* const PORT;
     const int BUFFER_SIZE;
+    const int MAX_FD;
+    // epoll
     const int EVENTS_SIZE;
     // 线程池
     const int THREADS_MAX;
     const int REQUESTS_MAX;
+
+    HTTP* user;
 
     int listen_fd;
     int epoll_fd;
@@ -24,13 +29,14 @@ class WebServer {
     Epoll* my_epoll;
     epoll_event* event_arr;
 
-    ThreadPool<int>* thread_pool;
+    ThreadPool<HTTP>* thread_pool;
 
     WebServer();
 
    public:
     WebServer(const char* __PORT,
               const int __BUFFER_SIZE,
+              const int __MAX_FD,
               const int __EVENTS_SIZE,
               const int __THREADS_MAX,
               const int __REQUESTS_MAX);

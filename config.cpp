@@ -3,6 +3,7 @@
 Config::Config()
     : PORT("10000"),
       BUFFER_SIZE(100),
+      MAX_FD(65536),
       EVENTS_SIZE(1024),
       THREADS_MAX(8),
       REQUESTS_MAX(10000) {}
@@ -15,6 +16,10 @@ const char* Config::getPORT() const {
 
 const int Config::getBUFFER_SIZE() const {
     return BUFFER_SIZE;
+}
+
+const int Config::getMAX_FD() const {
+    return MAX_FD;
 }
 
 const int Config::getEVENTS_SIZE() const {
