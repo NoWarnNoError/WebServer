@@ -10,21 +10,14 @@ using namespace std;
 void* get_in_addr(struct sockaddr* sa);
 
 WebServer::WebServer()
-    : PORT(0),
-      BUFFER_SIZE(0),
-      MAX_FD(0),
-      EVENTS_SIZE(0),
-      THREADS_MAX(0),
-      REQUESTS_MAX(0) {}
+    : PORT(0), MAX_FD(0), EVENTS_SIZE(0), THREADS_MAX(0), REQUESTS_MAX(0) {}
 
 WebServer::WebServer(const char* const __PORT,
-                     const int __BUFFER_SIZE,
                      const int __MAX_FD,
                      const int __EVENTS_SIZE,
                      const int __THREADS_MAX,
                      const int __REQUESTS_MAX)
     : PORT(__PORT),
-      BUFFER_SIZE(__BUFFER_SIZE),
       MAX_FD(__MAX_FD),
       EVENTS_SIZE(__EVENTS_SIZE),
       THREADS_MAX(__THREADS_MAX),
@@ -138,30 +131,19 @@ int WebServer::dealConnect(int socket_fd) {
         perror("accept");
         return -1;
     }
+    if (connfd >= MAX_FD || ++HTTP::user_count >= MAX_FD) {
+        cerr << "Server busy" << endl;
+        return -1;
+    }
+    user[connfd].init(connfd, ar, ar_len);
+
     my_epoll->addfd(epoll_fd, connfd, true, true);
 
     return 0;
 }
 
 void WebServer::dealRead(int socket_fd) {
-    char buffer[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
-
     thread_pool->request_append(user[socket_fd], 0);
-
-    // for (;;) {
-    //     int r = 0;
-    //     if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
-    //         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-    //             // 对于非阻塞IO，该条件表示数据已读取完毕
-    //             break;
-    //         }
-    //         close(socket_fd);
-    //         break;
-    //     } else if (r == 0) {
-    //         close(socket_fd);
-    //     }
-    // }
 }
 
 void WebServer::dealWrite(int socket_fd) {

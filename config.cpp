@@ -1,35 +1,8 @@
 #include "config.h"
 
-Config::Config()
-    : PORT("10000"),
-      BUFFER_SIZE(100),
-      MAX_FD(65536),
-      EVENTS_SIZE(1024),
-      THREADS_MAX(8),
-      REQUESTS_MAX(10000) {}
-
-Config::~Config() {}
-
-const char* Config::getPORT() const {
-    return PORT;
-}
-
-const int Config::getBUFFER_SIZE() const {
-    return BUFFER_SIZE;
-}
-
-const int Config::getMAX_FD() const {
-    return MAX_FD;
-}
-
-const int Config::getEVENTS_SIZE() const {
-    return EVENTS_SIZE;
-}
-
-const int Config::getTHREADS_MAX() const {
-    return THREADS_MAX;
-}
-
-const int Config::getREQUESTS_MAX() const {
-    return REQUESTS_MAX;
-}
+const char* Config::PORT = "10000";
+const int Config::MAX_FD = 65536;
+const int Config::EVENTS_SIZE = 1024;
+const int Config::THREADS_MAX = 8;
+const int Config::REQUESTS_MAX = 10000;
+const int Config::READ_BUFFER_SIZE = 2048;

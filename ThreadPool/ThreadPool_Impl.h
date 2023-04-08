@@ -41,8 +41,8 @@ ThreadPool<T>::~ThreadPool() {
 
 template <typename T>
 bool ThreadPool<T>::request_append(T& request, int state) {
-    mutex_pool->lock();
     request.set_state(state);
+    mutex_pool->lock();
     if (request_queue.size() < REQUESTS_MAX) {
         request_queue.push(request);
         mutex_pool->unlock();
@@ -80,7 +80,20 @@ void ThreadPool<T>::work() {
         mutex_pool->unlock();
         // 线程处理request
         if (request.get_state() == 0) {  // read
-        } else {                         // write
+            // for (;;) {
+            //     int r = 0;
+            //     if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
+            //         if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            //             // 对于非阻塞IO，该条件表示数据已读取完毕
+            //             break;
+            //         }
+            //         close(socket_fd);
+            //         break;
+            //     } else if (r == 0) {
+            //         close(socket_fd);
+            //     }
+            // }
+        } else {  // write
         }
 
         // cout << pthread_self() << "处理任务" << request << endl;

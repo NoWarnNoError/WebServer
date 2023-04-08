@@ -11,11 +11,9 @@ using namespace std;
 void test();
 
 int main() {
-    unique_ptr<Config> config(new Config);
     unique_ptr<WebServer> server(
-        new WebServer(config->getPORT(), config->getBUFFER_SIZE(),
-                      config->getMAX_FD(), config->getEVENTS_SIZE(),
-                      config->getTHREADS_MAX(), config->getREQUESTS_MAX()));
+        new WebServer(Config::PORT, Config::MAX_FD, Config::EVENTS_SIZE,
+                      Config::THREADS_MAX, Config::REQUESTS_MAX));
 
     server->init_thread_pool();
     server->eventListen();

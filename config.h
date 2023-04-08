@@ -1,20 +1,15 @@
-class Config {
-   private:
-    const char* PORT;
-    const int BUFFER_SIZE;
-    const int MAX_FD;
-    const int EVENTS_SIZE;
-    const int THREADS_MAX;
-    const int REQUESTS_MAX;
+#pragma once
 
+class Config {
    public:
+    static const char* PORT;
+    static const int MAX_FD;
+    static const int EVENTS_SIZE;
+    static const int THREADS_MAX;
+    static const int REQUESTS_MAX;
+    static const int READ_BUFFER_SIZE;
+
+   private:
     Config();
     ~Config();
-
-    const char* getPORT() const;
-    const int getBUFFER_SIZE() const;
-    const int getMAX_FD() const;
-    const int getEVENTS_SIZE() const;
-    const int getTHREADS_MAX() const;
-    const int getREQUESTS_MAX() const;
 };

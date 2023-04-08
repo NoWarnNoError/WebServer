@@ -9,6 +9,7 @@
         "streambuf": "cpp",
         "system_error": "cpp",
         "*.tcc": "cpp",
-        "memory": "cpp"
+        "memory": "cpp",
+        "unordered_map": "cpp"
     }
 }

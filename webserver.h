@@ -13,7 +13,6 @@
 class WebServer {
    private:
     const char* const PORT;
-    const int BUFFER_SIZE;
     const int MAX_FD;
     // epoll
     const int EVENTS_SIZE;
@@ -22,6 +21,7 @@ class WebServer {
     const int REQUESTS_MAX;
 
     HTTP* user;
+    static int user_count;
 
     int listen_fd;
     int epoll_fd;
@@ -36,7 +36,6 @@ class WebServer {
    public:
     WebServer(const char* __PORT,
               const int __BUFFER_SIZE,
-              const int __MAX_FD,
               const int __EVENTS_SIZE,
               const int __THREADS_MAX,
               const int __REQUESTS_MAX);
