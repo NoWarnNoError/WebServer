@@ -80,19 +80,11 @@ void ThreadPool<T>::work() {
         mutex_pool->unlock();
         // 线程处理request
         if (request.get_state() == 0) {  // read
-            // for (;;) {
-            //     int r = 0;
-            //     if ((r = recv(socket_fd, buffer, BUFFER_SIZE, 0)) < 0) {
-            //         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            //             // 对于非阻塞IO，该条件表示数据已读取完毕
-            //             break;
-            //         }
-            //         close(socket_fd);
-            //         break;
-            //     } else if (r == 0) {
-            //         close(socket_fd);
-            //     }
-            // }
+            if (request.recv_message() > 0) {
+                request.process();
+            } else {
+                cerr << pthread_self() << " recv() 错误" << endl;
+            }
         } else {  // write
         }
 

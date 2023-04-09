@@ -1,11 +1,25 @@
 #pragma once
 
+#include <errno.h>
 #include <sys/socket.h>
+#include <iostream>
 
 #include "config.h"
 
 class HTTP {
    private:
+    enum METHOD {
+        GET,
+        HEAD,
+        POST,
+        PUT,
+        DELETE,
+        TRACE,
+        OPTIONS,
+        CONNECT,
+        PATCH
+    };
+
     const int READ_BUFFER_SIZE;
 
     int socket_fd;
@@ -13,7 +27,8 @@ class HTTP {
     socklen_t ar_len;
     int state;
 
-    char* buffer;
+    char* buffer_read;
+    int idx_read;
 
    public:
     HTTP();
@@ -27,4 +42,5 @@ class HTTP {
     const int get_state();
     void set_state(const int __state);
     int recv_message();
+    int process();
 };
