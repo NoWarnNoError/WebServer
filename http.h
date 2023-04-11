@@ -31,10 +31,12 @@ class HTTP {
     int idx_read;
 
    public:
+    static int user_count;
+
     HTTP();
     ~HTTP();
 
-    static int user_count;
+    HTTP(const HTTP& __HTTP);
 
     void init(const int __socket_fd,
               const sockaddr_storage& __ar,

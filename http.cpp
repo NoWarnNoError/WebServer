@@ -1,5 +1,7 @@
 #include "http.h"
 
+#include <string.h>
+
 using namespace std;
 
 HTTP::HTTP()
@@ -8,7 +10,22 @@ HTTP::HTTP()
       buffer_read(new char[READ_BUFFER_SIZE]),
       idx_read(0) {}
 
+HTTP::HTTP(const HTTP& __HTTP)
+    : READ_BUFFER_SIZE(__HTTP.READ_BUFFER_SIZE),
+      socket_fd(__HTTP.socket_fd),
+      ar(__HTTP.ar),
+      ar_len(__HTTP.ar_len),
+      state(__HTTP.state),
+      buffer_read(new char[READ_BUFFER_SIZE]),
+      idx_read(__HTTP.idx_read) {
+    ++user_count;
+    cout << "拷贝构造函数" << user_count << endl;
+    strncpy(buffer_read, __HTTP.buffer_read, READ_BUFFER_SIZE);
+}
+
 HTTP::~HTTP() {
+    --user_count;
+    cout << "析构函数" << user_count << endl;
     delete[] buffer_read;
 }
 
@@ -49,7 +66,7 @@ int HTTP::recv_message() {
             idx_read += r;
         }
     }
-    cout << buffer_read << endl;
+    cout << "线程" << pthread_self() << ":" << buffer_read << endl;
 
     return idx_read;
 }
