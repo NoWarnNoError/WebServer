@@ -81,7 +81,7 @@ void ThreadPool<T>::work() {
         // 线程处理request
         if (request.get_state() == 0) {  // read
             if (request.recv_message() > 0) {
-                request.process();
+                request.process_read();
             } else {
                 cerr << pthread_self() << " recv() 错误" << endl;
             }

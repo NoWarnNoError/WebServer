@@ -8,6 +8,7 @@ class Config {
     static const int THREADS_MAX;
     static const int REQUESTS_MAX;
     static const int READ_BUFFER_SIZE;
+    static const int WRITE_BUFFER_SIZE;
 
    private:
     Config();

@@ -7,7 +7,7 @@
 #include "config.h"
 
 class HTTP {
-   private:
+   public:
     enum METHOD {
         GET,
         HEAD,
@@ -19,8 +19,23 @@ class HTTP {
         CONNECT,
         PATCH
     };
+    enum HTTP_CODE {
+        NO_REQUEST,
+        GET_REQUEST,
+        BAD_REQUEST,
+        NO_RESOURCE,
+        FORBIDDEN_REQUEST,
+        FILE_REQUEST,
+        INTERNAL_ERROR,
+        CLOSED_CONNECTION
+    };
+    enum LINE_STATUS { LINE_OK, LINE_BAD, LINE_OPEN };  // 从状态机读取状态
 
+    static int user_count;
+
+   private:
     const int READ_BUFFER_SIZE;
+    const int WRITE_BUFFER_SIZE;
 
     int socket_fd;
     sockaddr_storage ar;
@@ -29,10 +44,11 @@ class HTTP {
 
     char* buffer_read;
     int idx_read;
+    char* buffer_write;
+    int idx_write;
+    int idx_check;
 
    public:
-    static int user_count;
-
     HTTP();
     ~HTTP();
 
@@ -44,5 +60,6 @@ class HTTP {
     const int get_state();
     void set_state(const int __state);
     int recv_message();
-    int process();
+    HTTP_CODE process_read();
+    LINE_STATUS read_line();
 };

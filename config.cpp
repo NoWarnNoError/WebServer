@@ -6,3 +6,4 @@ const int Config::EVENTS_SIZE = 1024;
 const int Config::THREADS_MAX = 1;
 const int Config::REQUESTS_MAX = 10000;
 const int Config::READ_BUFFER_SIZE = 2048;
+const int Config::WRITE_BUFFER_SIZE = 1024;
