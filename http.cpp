@@ -1,6 +1,7 @@
 #include "http.h"
 
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -82,8 +83,23 @@ int HTTP::recv_message() {
 }
 
 HTTP::HTTP_CODE HTTP::process_read() {
+    CHECK_STATE check_state = CHECK_STATE_REQUESTLINE;
     LINE_STATUS line_status = LINE_OK;
+    char* text = buffer_read;
     while ((line_status = read_line()) == LINE_OK) {
+        switch (check_state) {
+            case CHECK_STATE_REQUESTLINE:
+                parse_requset_line(text);
+                break;
+            case CHECK_STATE_HEADER:
+                break;
+
+            case CHECK_STATE_CONTENT:
+                break;
+
+            default:
+                break;
+        }
     }
 }
 
@@ -116,4 +132,28 @@ HTTP::LINE_STATUS HTTP::read_line() {
     }
 
     return LINE_OPEN;
+}
+
+HTTP::HTTP_CODE HTTP::parse_requset_line(char* text) {
+    char* line_index = strpbrk(text, " \t");
+    if (!line_index) {
+        return BAD_REQUEST;
+    }
+    // 判断请求方法
+    if (strcasecmp(text, "GET") == 0) {
+        method = GET;
+    } else if (strcasecmp(text, "POST") == 0) {
+        method = POST;
+    } else if (strcasecmp(text, "HEAD") == 0) {
+        method = HEAD;
+    } else {
+        return BAD_REQUEST;
+    }
+    ++line_index;
+
+    line_index = strpbrk(text, " \t");
+    if (!line_index) {
+        return BAD_REQUEST;
+    }
+    strncpy(url,text)
 }

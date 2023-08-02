@@ -29,6 +29,11 @@ class HTTP {
         INTERNAL_ERROR,
         CLOSED_CONNECTION
     };
+    enum CHECK_STATE {
+        CHECK_STATE_REQUESTLINE,
+        CHECK_STATE_HEADER,
+        CHECK_STATE_CONTENT
+    };                                                  // 主状态机状态
     enum LINE_STATUS { LINE_OK, LINE_BAD, LINE_OPEN };  // 从状态机读取状态
 
     static int user_count;
@@ -48,6 +53,9 @@ class HTTP {
     int idx_write;
     int idx_check;
 
+    METHOD method;
+    char* url;
+
    public:
     HTTP();
     ~HTTP();
@@ -62,4 +70,5 @@ class HTTP {
     int recv_message();
     HTTP_CODE process_read();
     LINE_STATUS read_line();
+    HTTP_CODE parse_requset_line(char* text);
 };
