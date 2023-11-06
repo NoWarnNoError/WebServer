@@ -79,17 +79,17 @@ void ThreadPool<T>::work() {
         request_queue.pop();
         mutex_pool->unlock();
         // 线程处理request
-        if (request.get_state() == 0) {  // read
-            if (request.recv_message() > 0) {
-                request.process_read();
-            } else {
-                cerr << pthread_self() << " recv() 错误" << endl;
-            }
-        } else {  // write
-        }
+        // if (request.get_state() == 0) {  // read
+        //     if (request.recv_message() > 0) {
+        //         request.process_read();
+        //     } else {
+        //         cerr << pthread_self() << " recv() 错误" << endl;
+        //     }
+        // } else {  // write
+        // }
 
-        // cout << pthread_self() << "处理任务" << request << endl;
-        // sleep(10);
-        // cout << pthread_self() << "完成任务" << request << endl;
+        cout << pthread_self() << "处理任务" << endl;
+        sleep(10);
+        cout << pthread_self() << "完成任务" << endl;
     }
 }

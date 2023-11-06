@@ -8,6 +8,10 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${fileDirname}/*.cpp",
+                // "${fileDirname}/lib/http-parser/http_parser.cpp",
+                // "-L",
+                // "${fileDirname}/lib/http_parser",
+                "-lhttp_parser",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lpthread"

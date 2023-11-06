@@ -155,5 +155,5 @@ HTTP::HTTP_CODE HTTP::parse_requset_line(char* text) {
     if (!line_index) {
         return BAD_REQUEST;
     }
-    strncpy(url,text)
+    // strncpy(url,text)
 }
