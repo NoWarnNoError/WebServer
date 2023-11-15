@@ -5,9 +5,11 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "lib/http-parser/http_parser.h"
+
+#include "Http.h"
 #include "ThreadPool/ThreadPool_Impl.h"
 #include "ThreadPool/ThreadPool_fwd.h"
-#include "http.h"
 #include "myEpoll.h"
 
 class WebServer {
@@ -20,7 +22,7 @@ class WebServer {
     const int THREADS_MAX;
     const int REQUESTS_MAX;
 
-    HTTP* user;
+    Http* user;
     static int user_count;
 
     int listen_fd;
@@ -29,16 +31,16 @@ class WebServer {
     Epoll* my_epoll;
     epoll_event* event_arr;
 
-    ThreadPool<HTTP>* thread_pool;
+    ThreadPool<Http>* thread_pool;
 
     WebServer();
 
    public:
-    WebServer(const char* __PORT,
-              const int __BUFFER_SIZE,
-              const int __EVENTS_SIZE,
-              const int __THREADS_MAX,
-              const int __REQUESTS_MAX);
+    WebServer(const char* const _PORT,
+              const int _BUFFER_SIZE,
+              const int _EVENTS_SIZE,
+              const int _THREADS_MAX,
+              const int _REQUESTS_MAX);
     ~WebServer();
 
     void init_thread_pool();

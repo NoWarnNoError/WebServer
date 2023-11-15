@@ -12,17 +12,17 @@ void* get_in_addr(struct sockaddr* sa);
 WebServer::WebServer()
     : PORT(0), MAX_FD(0), EVENTS_SIZE(0), THREADS_MAX(0), REQUESTS_MAX(0) {}
 
-WebServer::WebServer(const char* const __PORT,
-                     const int __MAX_FD,
-                     const int __EVENTS_SIZE,
-                     const int __THREADS_MAX,
-                     const int __REQUESTS_MAX)
-    : PORT(__PORT),
-      MAX_FD(__MAX_FD),
-      EVENTS_SIZE(__EVENTS_SIZE),
-      THREADS_MAX(__THREADS_MAX),
-      REQUESTS_MAX(__REQUESTS_MAX),
-      user(new HTTP[MAX_FD]),
+WebServer::WebServer(const char* const _PORT,
+                     const int _MAX_FD,
+                     const int _EVENTS_SIZE,
+                     const int _THREADS_MAX,
+                     const int _REQUESTS_MAX)
+    : PORT(_PORT),
+      MAX_FD(_MAX_FD),
+      EVENTS_SIZE(_EVENTS_SIZE),
+      THREADS_MAX(_THREADS_MAX),
+      REQUESTS_MAX(_REQUESTS_MAX),
+      user(new Http[MAX_FD]),
       my_epoll(new Epoll()),
       event_arr(new epoll_event[EVENTS_SIZE]) {}
 
@@ -36,7 +36,7 @@ WebServer::~WebServer() {
 }
 
 void WebServer::init_thread_pool() {
-    thread_pool = new ThreadPool<HTTP>(THREADS_MAX, REQUESTS_MAX);
+    thread_pool = new ThreadPool<Http>(THREADS_MAX, REQUESTS_MAX);
 }
 
 void WebServer::eventListen() {
@@ -92,11 +92,13 @@ void WebServer::eventListen() {
 
 void WebServer::eventLoop() {
     epoll_fd = epoll_create(5);
+    Http::set_epoll_fd(epoll_fd);
     if (epoll_fd < 0) {
         perror("epoll_create");
         exit(-1);
     }
-    my_epoll->addfd(epoll_fd, listen_fd, false, true);
+    my_epoll->addfd(epoll_fd, listen_fd, false,
+                    false);  // connect_fd 是否该设置为lt
 
     for (;;) {
         int epoll_number = epoll_wait(epoll_fd, event_arr, EVENTS_SIZE, -1);
@@ -131,7 +133,7 @@ int WebServer::dealConnect(int socket_fd) {
         perror("accept");
         return -1;
     }
-    if (connfd >= MAX_FD || ++HTTP::user_count >= MAX_FD) {
+    if (connfd >= MAX_FD || ++Http::user_count >= MAX_FD) {
         cerr << "Server busy" << endl;
         return -1;
     }
@@ -143,11 +145,11 @@ int WebServer::dealConnect(int socket_fd) {
 }
 
 void WebServer::dealRead(int socket_fd) {
-    thread_pool->request_append(user[socket_fd], 0);
+    thread_pool->request_append(user[socket_fd], HTTP_REQUEST);
 }
 
 void WebServer::dealWrite(int socket_fd) {
-    thread_pool->request_append(user[socket_fd], 1);
+    thread_pool->request_append(user[socket_fd], HTTP_RESPONSE);
 }
 
 void* get_in_addr(struct sockaddr* sa) {

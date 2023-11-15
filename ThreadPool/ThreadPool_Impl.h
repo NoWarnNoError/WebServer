@@ -40,8 +40,8 @@ ThreadPool<T>::~ThreadPool() {
 }
 
 template <typename T>
-bool ThreadPool<T>::request_append(T& request, int state) {
-    request.set_state(state);
+bool ThreadPool<T>::request_append(T& request, http_parser_type http_type) {
+    request.set_http_type(http_type);
     mutex_pool->lock();
     if (request_queue.size() < REQUESTS_MAX) {
         request_queue.push(request);
@@ -79,14 +79,14 @@ void ThreadPool<T>::work() {
         request_queue.pop();
         mutex_pool->unlock();
         // 线程处理request
-        // if (request.get_state() == 0) {  // read
-        //     if (request.recv_message() > 0) {
-        //         request.process_read();
-        //     } else {
-        //         cerr << pthread_self() << " recv() 错误" << endl;
-        //     }
-        // } else {  // write
-        // }
+        if (request.get_http_type() == HTTP_REQUEST) {  // read
+            if (request.recv_message() > 0) {
+                request.process();
+            } else {
+                cerr << pthread_self() << " recv() 错误" << endl;
+            }
+        } else {  // write
+        }
 
         cout << pthread_self() << "处理任务" << endl;
         sleep(10);
