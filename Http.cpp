@@ -1,5 +1,7 @@
 #include "Http.h"
 
+int Http::epoll_fd = -1;
+
 Http::Http()
     : READ_BUFFER_SIZE(Config::READ_BUFFER_SIZE),
       WRITE_BUFFER_SIZE(Config::READ_BUFFER_SIZE),
@@ -13,7 +15,11 @@ Http::Http()
     http_parser_settings_init(&settings);
 }
 
-Http::~Http() {}
+Http::~Http() {
+    delete[] buffer_read;
+    delete[] buffer_write;
+    free(parser);
+}
 
 Http::Http(const Http& _Http)
     : READ_BUFFER_SIZE(_Http.READ_BUFFER_SIZE),
@@ -50,6 +56,25 @@ void Http::init(const int _socket_fd,
     //             .on_headers_complete = on_headers_complete,
     //             .on_body = on_body,
     //             .on_message_complete = on_message_complete};
+
+    init();
+}
+
+void Http::init() {
+    idx_read = 0;
+    idx_write = 0;
+
+    memset(buffer_read, 0, READ_BUFFER_SIZE);
+    memset(buffer_write, 0, WRITE_BUFFER_SIZE);
+    memset(parser, 0, sizeof(http_parser));
+}
+
+const http_parser_type Http::get_http_type() {
+    return http_type;
+}
+
+void Http::set_http_type(const http_parser_type _http_type) {
+    http_type = _http_type;
 }
 
 int Http::recv_message() {
@@ -93,6 +118,14 @@ int Http::process_read() {
 
 int Http::generate_response() {
     if (parser->method == HTTP_HEAD) {
+        strncpy(buffer_write,
+                "HTTP/1.0 200 OK\r\n"
+                "Server: DYK_WSL\r\n"
+                "Content-Type: text/html; charset=UTF-8\r\n"
+                "Date: Fri, 18 Nov 2023 02:01:05 GMT\r\n"
+                "\r\n",
+                WRITE_BUFFER_SIZE);
+        idx_write += strlen(buffer_write);
     } else if (parser->method == HTTP_GET) {
     } else if (parser->method == HTTP_POST) {
     } else {
@@ -102,12 +135,20 @@ int Http::generate_response() {
     return 0;
 }
 
-const http_parser_type Http::get_http_type() {
-    return http_type;
-}
+int Http::send_message() {
+    if (idx_write == 0) {
+        my_epoll->modfd(epoll_fd, socket_fd, EPOLLIN, true, true);
+        init();
 
-void Http::set_http_type(const http_parser_type _http_type) {
-    http_type = _http_type;
+        return 0;
+    }
+
+    int idx_send = 0;
+    while (idx_send < idx_read) {
+        idx_send += send(socket_fd, buffer_write + idx_send, idx_write, 0);
+    }
+
+    return idx_send;
 }
 
 // int on_message_begin(http_parser* parser) {

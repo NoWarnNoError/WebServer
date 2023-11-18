@@ -49,15 +49,17 @@ class Http {
     ~Http();
     Http(const Http& _Http);
 
+    void init();  // 内部初始化
     void init(const int _socket_fd,
               const sockaddr_storage& _ar,
-              const socklen_t _ar_len);
+              const socklen_t _ar_len);  // 外部初始化
     static void inline set_epoll_fd(int _epoll_fd) { epoll_fd = _epoll_fd; }
 
     const http_parser_type get_http_type();
     void set_http_type(const http_parser_type _http_type);
 
-    int Http::recv_message();
+    int recv_message();
     int process_read();
     int generate_response();
+    int send_message();
 };

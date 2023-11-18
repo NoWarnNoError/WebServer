@@ -5,7 +5,7 @@
 #include <queue>
 #include <vector>
 
-#include "lib/http-parser/http_parser.h"
+#include "../lib/http-parser/http_parser.h"
 
 #include "../Cond.h"
 #include "../Mutex.h"

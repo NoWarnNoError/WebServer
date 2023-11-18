@@ -80,12 +80,14 @@ void ThreadPool<T>::work() {
         mutex_pool->unlock();
         // 线程处理request
         if (request.get_http_type() == HTTP_REQUEST) {  // read
-            if (request.recv_message() > 0) {
-                request.process();
+            if (request.recv_message() >= 0) {
+                request.process_read();
             } else {
                 cerr << pthread_self() << " recv() 错误" << endl;
             }
         } else {  // write
+            int r = request.send_message();
+            cout << "send() " << r << endl;
         }
 
         cout << pthread_self() << "处理任务" << endl;

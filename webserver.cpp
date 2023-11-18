@@ -133,7 +133,8 @@ int WebServer::dealConnect(int socket_fd) {
         perror("accept");
         return -1;
     }
-    if (connfd >= MAX_FD || ++Http::user_count >= MAX_FD) {
+    // if (connfd >= MAX_FD || ++Http::user_count >= MAX_FD) {
+    if (connfd >= MAX_FD) {
         cerr << "Server busy" << endl;
         return -1;
     }
