@@ -11,6 +11,6 @@ class Config {
     static const int WRITE_BUFFER_SIZE;
 
    private:
-    Config();
-    ~Config();
+    Config() = default;
+    ~Config() = default;
 };

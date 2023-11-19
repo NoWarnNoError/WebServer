@@ -4,7 +4,7 @@ int Http::epoll_fd = -1;
 
 Http::Http()
     : READ_BUFFER_SIZE(Config::READ_BUFFER_SIZE),
-      WRITE_BUFFER_SIZE(Config::READ_BUFFER_SIZE),
+      WRITE_BUFFER_SIZE(Config::WRITE_BUFFER_SIZE),
       http_type(HTTP_REQUEST),
       my_epoll(new Epoll()),
       buffer_read(new char[READ_BUFFER_SIZE]),
@@ -23,7 +23,7 @@ Http::~Http() {
 
 Http::Http(const Http& _Http)
     : READ_BUFFER_SIZE(_Http.READ_BUFFER_SIZE),
-      WRITE_BUFFER_SIZE(_Http.READ_BUFFER_SIZE),
+      WRITE_BUFFER_SIZE(_Http.WRITE_BUFFER_SIZE),
       socket_fd(_Http.socket_fd),
       ar(_Http.ar),
       ar_len(_Http.ar_len),
@@ -89,9 +89,9 @@ int Http::recv_message() {
                 // 对于非阻塞IO，该条件表示数据已读取完毕
                 break;
             }
-            return -1;
+            return -2;
         } else if (r == 0) {
-            return -1;
+            return -3;
         } else {
             idx_read += r;
         }
@@ -127,6 +127,14 @@ int Http::generate_response() {
                 WRITE_BUFFER_SIZE);
         idx_write += strlen(buffer_write);
     } else if (parser->method == HTTP_GET) {
+        strncpy(buffer_write,
+                "HTTP/1.0 200 OK\r\n"
+                "Server: DYK_WSL\r\n"
+                "Content-Type: text/html; charset=UTF-8\r\n"
+                "Date: Fri, 18 Nov 2023 02:01:05 GMT\r\n"
+                "\r\n",
+                WRITE_BUFFER_SIZE);
+        idx_write += strlen(buffer_write);
     } else if (parser->method == HTTP_POST) {
     } else {
         return -1;

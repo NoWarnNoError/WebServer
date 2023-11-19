@@ -76,22 +76,25 @@ void ThreadPool<T>::work() {
         }
 
         T& request = request_queue.front();
-        request_queue.pop();
         mutex_pool->unlock();
         // 线程处理request
+        cout << pthread_self() << " 开始处理任务" << endl;
+
         if (request.get_http_type() == HTTP_REQUEST) {  // read
-            if (request.recv_message() >= 0) {
+            int r = request.recv_message();
+            if (r >= 0) {
                 request.process_read();
             } else {
-                cerr << pthread_self() << " recv() 错误" << endl;
+                cerr << pthread_self() << " recv() 错误 " << r << endl;
             }
         } else {  // write
             int r = request.send_message();
             cout << "send() " << r << endl;
         }
 
-        cout << pthread_self() << "处理任务" << endl;
-        sleep(10);
-        cout << pthread_self() << "完成任务" << endl;
+        cout << pthread_self() << " 完成任务" << endl;
+
+        request_queue
+            .pop();  // request 析构必须在程序处理后，不然有可能出现段错误
     }
 }
