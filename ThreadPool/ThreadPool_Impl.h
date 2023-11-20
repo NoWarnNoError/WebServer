@@ -40,8 +40,8 @@ ThreadPool<T>::~ThreadPool() {
 }
 
 template <typename T>
-bool ThreadPool<T>::request_append(T& request, http_parser_type http_type) {
-    request.set_http_type(http_type);
+bool ThreadPool<T>::request_append(T* request, http_parser_type http_type) {
+    request->set_http_type(http_type);
     mutex_pool->lock();
     if (request_queue.size() < REQUESTS_MAX) {
         request_queue.push(request);
@@ -75,26 +75,34 @@ void ThreadPool<T>::work() {
             return;
         }
 
-        T& request = request_queue.front();
+        T* request = request_queue.front();
+        request_queue.pop();
+        // cout << " request.buffer_write: " << request->buffer_write << endl;
         mutex_pool->unlock();
         // 线程处理request
-        cout << pthread_self() << " 开始处理任务" << endl;
+        // cout << pthread_self() << " 开始读取socket" << endl;
 
-        if (request.get_http_type() == HTTP_REQUEST) {  // read
-            int r = request.recv_message();
+        if (request->get_http_type() == HTTP_REQUEST) {  // read
+            cout << pthread_self() << " 开始读取socket" << endl;
+
+            int r = request->recv_message();
             if (r >= 0) {
-                request.process_read();
+                request->process_read();
             } else {
                 cerr << pthread_self() << " recv() 错误 " << r << endl;
             }
+
+            cout << pthread_self() << " 完成读取socket" << endl;
         } else {  // write
-            int r = request.send_message();
+            cout << pthread_self() << " 开始写入socket" << endl;
+
+            int r = request->send_message();
             cout << "send() " << r << endl;
+
+            cout << pthread_self() << " 完成写入socket" << endl;
+            // return;
         }
 
-        cout << pthread_self() << " 完成任务" << endl;
-
-        request_queue
-            .pop();  // request 析构必须在程序处理后，不然有可能出现段错误
+        // cout << pthread_self() << " 完成任务" << endl;
     }
 }

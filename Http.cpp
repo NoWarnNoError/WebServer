@@ -5,8 +5,8 @@ int Http::epoll_fd = -1;
 Http::Http()
     : READ_BUFFER_SIZE(Config::READ_BUFFER_SIZE),
       WRITE_BUFFER_SIZE(Config::WRITE_BUFFER_SIZE),
-      http_type(HTTP_REQUEST),
       my_epoll(new Epoll()),
+      http_type(HTTP_REQUEST),
       buffer_read(new char[READ_BUFFER_SIZE]),
       idx_read(0),
       buffer_write(new char[WRITE_BUFFER_SIZE]),
@@ -24,6 +24,7 @@ Http::~Http() {
 Http::Http(const Http& _Http)
     : READ_BUFFER_SIZE(_Http.READ_BUFFER_SIZE),
       WRITE_BUFFER_SIZE(_Http.WRITE_BUFFER_SIZE),
+      my_epoll(_Http.my_epoll),
       socket_fd(_Http.socket_fd),
       ar(_Http.ar),
       ar_len(_Http.ar_len),
@@ -32,6 +33,7 @@ Http::Http(const Http& _Http)
       idx_read(_Http.idx_read),
       buffer_write(new char[WRITE_BUFFER_SIZE]),
       idx_write(_Http.idx_write),
+      settings(_Http.settings),
       parser((http_parser*)malloc(sizeof(http_parser))) {
     // cout << "拷贝构造函数" << user_count << endl;
     strncpy(buffer_read, _Http.buffer_read, READ_BUFFER_SIZE);
@@ -87,10 +89,14 @@ int Http::recv_message() {
                       READ_BUFFER_SIZE - idx_read, 0)) < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 // 对于非阻塞IO，该条件表示数据已读取完毕
+                my_epoll->reset_oneshut(epoll_fd, socket_fd);
+
                 break;
             }
             return -2;
         } else if (r == 0) {
+            close(socket_fd);
+            std::cout << "关闭socket " << socket_fd << std::endl;
             return -3;
         } else {
             idx_read += r;
@@ -132,7 +138,8 @@ int Http::generate_response() {
                 "Server: DYK_WSL\r\n"
                 "Content-Type: text/html; charset=UTF-8\r\n"
                 "Date: Fri, 18 Nov 2023 02:01:05 GMT\r\n"
-                "\r\n",
+                "\r\n"
+                "<!DOCTYPE html><html lang=“en”> …</html>",
                 WRITE_BUFFER_SIZE);
         idx_write += strlen(buffer_write);
     } else if (parser->method == HTTP_POST) {

@@ -146,11 +146,11 @@ int WebServer::dealConnect(int socket_fd) {
 }
 
 void WebServer::dealRead(int socket_fd) {
-    thread_pool->request_append(user[socket_fd], HTTP_REQUEST);
+    thread_pool->request_append(user + socket_fd, HTTP_REQUEST);
 }
 
 void WebServer::dealWrite(int socket_fd) {
-    thread_pool->request_append(user[socket_fd], HTTP_RESPONSE);
+    thread_pool->request_append(user + socket_fd, HTTP_RESPONSE);
 }
 
 void* get_in_addr(struct sockaddr* sa) {
