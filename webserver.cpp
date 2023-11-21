@@ -65,6 +65,7 @@ void WebServer::eventListen() {
 
         int flag = 1;
         setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+        setsockopt(listen_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
         if ((r = bind(listen_fd, p_ar->ai_addr, p_ar->ai_addrlen)) < 0) {
             close(listen_fd);
@@ -98,7 +99,9 @@ void WebServer::eventLoop() {
         exit(-1);
     }
     my_epoll->addfd(epoll_fd, listen_fd, false,
-                    false);  // connect_fd 是否该设置为lt
+                    false);  // listen_fd 使用lt模式为,
+                             // 防止et模式高并发下只触发一次导致连接丢失
+                             // 此时阻塞或非阻塞均可
 
     for (;;) {
         int epoll_number = epoll_wait(epoll_fd, event_arr, EVENTS_SIZE, -1);
@@ -138,9 +141,14 @@ int WebServer::dealConnect(int socket_fd) {
         cerr << "Server busy" << endl;
         return -1;
     }
+    int flag = 1;
+    // setsockopt(connfd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag));
     user[connfd].init(connfd, ar, ar_len);
 
     my_epoll->addfd(epoll_fd, connfd, true, true);
+    // et 模式下需要将 connfd 设置为非阻塞
+    // 因为 et 模式只返回一次，需要循环读取，使用阻塞 socket 将在 recv
+    // 处发生阻塞
 
     return 0;
 }

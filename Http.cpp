@@ -123,29 +123,30 @@ int Http::process_read() {
 }
 
 int Http::generate_response() {
+    time_t now = time(nullptr);
     if (parser->method == HTTP_HEAD) {
-        strncpy(buffer_write,
-                "HTTP/1.0 200 OK\r\n"
-                "Server: DYK_WSL\r\n"
-                "Content-Type: text/html; charset=UTF-8\r\n"
-                "Date: Fri, 18 Nov 2023 02:01:05 GMT\r\n"
-                "\r\n",
-                WRITE_BUFFER_SIZE);
-        idx_write += strlen(buffer_write);
+        snprintf(buffer_write, WRITE_BUFFER_SIZE,
+                 "HTTP/1.0 200 OK\r\n"
+                 "Server: DYK_WSL\r\n"
+                 "Content-Type: text/plain; charset=UTF-8\r\n"
+                 "Date: %s\r\n"
+                 "\r\n"
+                 "response from HTTP_HEAD\n",
+                 ctime(&now));
     } else if (parser->method == HTTP_GET) {
-        strncpy(buffer_write,
-                "HTTP/1.0 200 OK\r\n"
-                "Server: DYK_WSL\r\n"
-                "Content-Type: text/html; charset=UTF-8\r\n"
-                "Date: Fri, 18 Nov 2023 02:01:05 GMT\r\n"
-                "\r\n"
-                "<!DOCTYPE html><html lang=“en”> …</html>",
-                WRITE_BUFFER_SIZE);
-        idx_write += strlen(buffer_write);
+        snprintf(buffer_write, WRITE_BUFFER_SIZE,
+                 "HTTP/1.0 200 OK\r\n"
+                 "Server: DYK_WSL\r\n"
+                 "Content-Type: text/plain; charset=UTF-8\r\n"
+                 "Date: %s\r\n"
+                 "\r\n"
+                 "response from HTTP_GET\n",
+                 ctime(&now));
     } else if (parser->method == HTTP_POST) {
     } else {
         return -1;
     }
+    idx_write += strlen(buffer_write);
 
     return 0;
 }
@@ -160,8 +161,22 @@ int Http::send_message() {
 
     int idx_send = 0;
     while (idx_send < idx_read) {
-        idx_send += send(socket_fd, buffer_write + idx_send, idx_write, 0);
+        int r =
+            send(socket_fd, buffer_write + idx_send, idx_write - idx_send, 0);
+        if (r == -1) {
+            if (errno == EWOULDBLOCK) {  // TCP 窗口过小，无法发送
+                std::cerr << "TCP 窗口过小，无法发送" << std::endl;
+                return -1;
+            } else if (errno == EINTR) {  // 被信号中断，重试
+                continue;
+            } else {
+                return -1;
+            }
+        }
+        idx_send += r;
     }
+    // send(socket_fd, buffer_write, idx_write, 0);
+    close(socket_fd);
 
     return idx_send;
 }
