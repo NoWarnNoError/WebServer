@@ -65,7 +65,7 @@ void WebServer::eventListen() {
 
         int flag = 1;
         setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
-        setsockopt(listen_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+        // setsockopt(listen_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
         if ((r = bind(listen_fd, p_ar->ai_addr, p_ar->ai_addrlen)) < 0) {
             close(listen_fd);
@@ -81,7 +81,7 @@ void WebServer::eventListen() {
     char ip[INET6_ADDRSTRLEN];
     inet_ntop(p_ar->ai_family, get_in_addr(p_ar->ai_addr), ip,
               INET6_ADDRSTRLEN);
-    cout << ip << endl;
+    cout << "服务运行于: " << ip << '\n' << "端口号: " << PORT << endl;
 
     freeaddrinfo(server_ar);
 

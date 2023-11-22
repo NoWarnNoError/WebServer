@@ -102,7 +102,7 @@ int Http::recv_message() {
             idx_read += r;
         }
     }
-    std::cout << "线程" << pthread_self() << ":" << buffer_read << std::endl;
+    // std::cout << "线程" << pthread_self() << ":" << buffer_read << std::endl;
 
     return idx_read;
 }
