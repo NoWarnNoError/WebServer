@@ -83,7 +83,7 @@ void ThreadPool<T>::work() {
         // cout << pthread_self() << " 开始读取socket" << endl;
 
         if (request->get_http_type() == HTTP_REQUEST) {  // read
-            cout << pthread_self() << " 开始读取socket" << endl;
+            // cout << pthread_self() << " 开始读取socket" << endl;
 
             int r = request->recv_message();
             if (r >= 0) {
@@ -92,14 +92,16 @@ void ThreadPool<T>::work() {
                 cerr << pthread_self() << " recv() 错误 " << r << endl;
             }
 
-            cout << pthread_self() << " 完成读取socket" << endl;
+            // cout << pthread_self() << " 完成读取socket" << endl;
         } else {  // write
-            cout << pthread_self() << " 开始写入socket" << endl;
+            // cout << pthread_self() << " 开始写入socket" << endl;
 
             int r = request->send_message();
-            cout << "send() " << r << endl;
+            if (r < 0) {
+                cout << "send() " << r << endl;
+            }
 
-            cout << pthread_self() << " 完成写入socket" << endl;
+            // cout << pthread_self() << " 完成写入socket" << endl;
             // return;
         }
 
