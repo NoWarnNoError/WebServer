@@ -42,4 +42,5 @@
         "functional": "cpp",
         "iterator": "cpp"
     }
+    // "C_Cpp.errorSquiggles": "disabled"
 }

@@ -131,7 +131,7 @@ int Http::generate_response() {
                  "Content-Type: text/plain; charset=UTF-8\r\n"
                  "Date: %s\r\n"
                  "\r\n"
-                 "response from HTTP_HEAD\n",
+                 "response from HTTP_HEAD\r\n",
                  ctime(&now));
     } else if (parser->method == HTTP_GET) {
         snprintf(buffer_write, WRITE_BUFFER_SIZE,
@@ -140,13 +140,16 @@ int Http::generate_response() {
                  "Content-Type: text/plain; charset=UTF-8\r\n"
                  "Date: %s\r\n"
                  "\r\n"
-                 "response from HTTP_GET\n",
+                 "response from HTTP_GET\r\n",
                  ctime(&now));
     } else if (parser->method == HTTP_POST) {
     } else {
         return -1;
     }
     idx_write += strlen(buffer_write);
+    // for (int i = 0; i < 1000000; ++i) {
+    //     i *= 1;
+    // }
 
     return 0;
 }

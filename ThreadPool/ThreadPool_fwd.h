@@ -7,6 +7,7 @@
 
 #include "../lib/http-parser/http_parser.h"
 
+#include "../ConcurrentQueue.h"
 #include "../Cond.h"
 #include "../Mutex.h"
 
