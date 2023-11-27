@@ -41,7 +41,9 @@
         "typeinfo": "cpp",
         "functional": "cpp",
         "iterator": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "ratio": "cpp",
+        "chrono": "cpp"
     }
     // "C_Cpp.errorSquiggles": "disabled"
 }

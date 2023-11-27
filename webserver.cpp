@@ -92,7 +92,7 @@ void WebServer::eventListen() {
 }
 
 void WebServer::eventLoop() {
-    epoll_fd = epoll_create(100);
+    epoll_fd = epoll_create(Config::REQUESTS_MAX);
     Http::set_epoll_fd(epoll_fd);
     if (epoll_fd < 0) {
         perror("epoll_create");

@@ -42,13 +42,13 @@ ThreadPool<T>::~ThreadPool() {
 template <typename T>
 bool ThreadPool<T>::request_append(T* request, http_parser_type http_type) {
     request->set_http_type(http_type);
-    mutex_pool->lock();
+    // mutex_pool->lock();
     if (request_queue.size() < REQUESTS_MAX) {
         request_queue.push(request);
-        mutex_pool->unlock();
+        // mutex_pool->unlock();
         cond->signal();  // 通知其他线程
     } else {
-        mutex_pool->unlock();
+        // mutex_pool->unlock();
         cerr << "request queue has reached max" << endl;
         return false;
     }
@@ -65,7 +65,7 @@ void* ThreadPool<T>::worker(void* arg) {
 template <typename T>
 void ThreadPool<T>::work() {
     while (true) {
-        mutex_pool->lock();
+        // mutex_pool->lock();
         while (request_queue.empty() && !shutdown) {
             cond->wait(mutex_pool->get());
         }
@@ -78,7 +78,7 @@ void ThreadPool<T>::work() {
         T* request = request_queue.front();
         request_queue.pop();
         // cout << " request.buffer_write: " << request->buffer_write << endl;
-        mutex_pool->unlock();
+        // mutex_pool->unlock();
         // 线程处理request
         // cout << pthread_self() << " 开始读取socket" << endl;
 
