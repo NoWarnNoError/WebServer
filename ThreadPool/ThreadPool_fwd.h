@@ -22,7 +22,7 @@ class ThreadPool {
     Mutex* mutex_pool;
     Cond* cond;
     vector<pthread_t*> pthread_pool;
-    ConcurrentQueue<T*> request_queue;
+    queue<T*> request_queue;
 
     ThreadPool();
 
