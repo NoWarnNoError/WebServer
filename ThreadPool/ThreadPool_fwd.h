@@ -28,6 +28,7 @@ class ThreadPool {
 
    public:
     ThreadPool(const int __THREADS_MAX, const int __REQUESTS_MAX);
+    ThreadPool(const ThreadPool&) = delete;
     ~ThreadPool();
 
     bool request_append(T* request, http_parser_type http_type);

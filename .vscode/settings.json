@@ -40,7 +40,8 @@
         "stdexcept": "cpp",
         "typeinfo": "cpp",
         "functional": "cpp",
-        "iterator": "cpp"
+        "iterator": "cpp",
+        "thread": "cpp"
     }
     // "C_Cpp.errorSquiggles": "disabled"
 }
