@@ -165,7 +165,8 @@ int Http::send_message() {
     int idx_send = 0;
     while (idx_send < idx_read) {
         int r =
-            send(socket_fd, buffer_write + idx_send, idx_write - idx_send, 0);
+            send(socket_fd, buffer_write + idx_send, idx_write - idx_send, MSG_NOSIGNAL);// reslove "broken pipe error"
+
         if (r == -1) {
             if (errno == EWOULDBLOCK) {  // TCP 窗口过小，无法发送
                 std::cerr << "TCP 窗口过小，无法发送" << std::endl;
